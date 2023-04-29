@@ -228,6 +228,21 @@ def collect_and_enter(client, user_id):
     logger.info("collected ticket and entered station")
 
 
+def delete_user(client, user_id):
+    # login as admin
+    body = {"username": "admin", "password": "222222"}
+    admin_info = {}
+    resp = post(client, url="/api/v1/users/login", body=body, name="/users/login",
+                err_msg="failed to login as admin")
+    logger.info("admin login, resp: {}".format(resp))
+    admin_info = resp["data"]
+    headers = {"Authorization": "Bearer {}".format(admin_info["token"])}
+    # delete current created user
+    resp = client.delete(url="/api/v1/adminuserservice/users/{}".format(user_id),
+                         headers=headers, name="/adminuserservice/users")
+    logger.info("successfully delete user {}".format(user_id))
+
+
 class TrainTicketUser(HttpUser):
     # define waiting time between each task
     wait_time = between(1, 5)
@@ -269,4 +284,4 @@ class TrainTicketUser(HttpUser):
 
     # delete the user, avoiding too many users
     def on_stop(self):
-        pass
+        delete_user(self.client, self.user_info["userId"])
